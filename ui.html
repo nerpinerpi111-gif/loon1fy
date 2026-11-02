@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Loonify</title>
+<style>
+:root{--a:#d946ef;--g:#22c55e;--m:#8a8a8a;--l:#1a1a1a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#000;color:#eee;font:14px 'Segoe UI',system-ui,sans-serif;overflow:hidden;user-select:none}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-thumb{background:#222;border-radius:4px}
+button{font:inherit}
+#app{display:grid;grid-template-columns:64px 1fr;grid-template-rows:1fr auto;height:100vh}
+#side{display:flex;flex-direction:column;align-items:center;gap:20px;padding:56px 0 16px}
+#side .sp{flex:1}
+.ib{background:none;border:0;color:var(--m);cursor:pointer;padding:8px;display:grid;place-items:center;border-radius:8px}
+.ib:hover,.ib.on{color:#fff}.ib.act{color:var(--a)}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.f{fill:currentColor;stroke:none}
+#main{overflow:auto;padding:28px 40px 24px 20px}
+.view{display:none}.view.on{display:block}
+h2{font-size:18px;margin:26px 0 12px}
+.logo{position:fixed;top:14px;left:16px;font-weight:900;color:var(--g);letter-spacing:1px;z-index:2}
+.search{display:flex;align-items:center;gap:10px;background:#101010;border:1px solid #1c1c1c;border-radius:30px;padding:0 18px;height:46px;color:var(--m)}
+.search input{flex:1;background:none;border:0;outline:0;color:#fff;font-size:15px;user-select:text}
+.wave{position:relative;display:flex;gap:14px;align-items:flex-start;margin-top:26px;padding:6px 0}
+.wave small{display:block;color:var(--m);margin:2px 0 8px}
+.wave b{font-size:20px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:#141414;border:1px solid #2a2a2a;color:#ddd;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:13px}
+.chip.on{background:#222;border-color:#fff;color:#fff}
+.wave .moods{margin-left:auto;max-width:48%;flex-shrink:0}
+.wave .moods h3{margin:0 0 10px;font-size:13px;color:var(--m);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.wave .moods .chips{justify-content:flex-end}
+.wave .moods .chip.on{background:var(--a);border-color:var(--a)}
+.pp{width:44px;height:44px;border-radius:50%;background:var(--a);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;flex:none}
+.pp svg{width:20px;height:20px}
+.cards{display:flex;flex-wrap:wrap;gap:18px}
+.card{width:150px;cursor:pointer}
+.card .cv{position:relative;width:150px;height:150px;border-radius:10px;overflow:hidden;background:var(--l)}
+.card img,.cv img{width:100%;height:100%;object-fit:cover}
+.card b{display:block;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card span{color:var(--m);font-size:12px}
+.card .dot{position:absolute;top:8px;left:8px;width:12px;height:12px;border:2px solid #000}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;flex:none}
+.row{display:flex;align-items:center;gap:12px;padding:6px 8px;border-radius:8px;cursor:pointer}
+.row:hover{background:#111}.row.cur{background:#16101a}
+.row .cv{width:42px;height:42px;border-radius:6px;overflow:hidden;background:var(--l);flex:none}
+.meta{flex:1;min-width:0}.meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta span{display:flex;align-items:center;color:var(--m);font-size:12px;white-space:nowrap;overflow:hidden}
+.dur{color:var(--m);font-size:13px}
+.heart.on{color:var(--g)}.heart.on svg{fill:var(--g)}
+.empty{color:var(--m);padding:20px 8px}
+.tabs{display:flex;gap:26px;margin:20px 0 16px;border-bottom:1px solid #1a1a1a}
+.tab{padding:0 2px 10px;color:var(--m);cursor:pointer;border-bottom:2px solid transparent}
+.tab.on{color:#fff;border-color:#fff}
+#v-player.on{display:flex;align-items:center;justify-content:center;gap:70px;height:100%;padding-right:20px}
+#pc{width:min(440px,36vw);aspect-ratio:1;border-radius:50%;object-fit:cover;background:var(--l);animation:spin 40s linear infinite;animation-play-state:paused;box-shadow:0 0 80px #0008}
+body.playing #pc{animation-play-state:running}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pinfo{width:min(700px,45vw)}
+#pt{font-size:42px;font-weight:800;line-height:1.1}
+#pa{color:var(--m);font-size:18px;margin:8px 0 26px}
+.tm{display:flex;justify-content:space-between;color:var(--m);margin-top:6px;font-size:13px}
+#viz{display:flex;align-items:flex-end;gap:4px;height:60px;margin:22px 0}
+#viz i{flex:1;background:linear-gradient(var(--a),#7e22ce);border-radius:2px 2px 0 0;height:12%;transition:height .14s}
+.ctrl{display:flex;align-items:center;justify-content:center;gap:18px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;outline:0;cursor:pointer;background:linear-gradient(to right,#fff var(--p,0%),#2a2a2a var(--p,0%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff}
+.vol{display:flex;align-items:center;gap:8px;width:130px;color:var(--m)}
+#bar{grid-column:1/3;display:grid;grid-template-columns:300px 1fr 220px;align-items:center;height:84px;padding:0 20px;background:#050505}
+body.pv #bar{display:none}
+#bl{display:flex;align-items:center;gap:12px;min-width:0}
+#bc{width:48px;height:48px;border-radius:50%;overflow:hidden;background:var(--l);flex:none}
+#bc img{width:100%;height:100%;object-fit:cover}
+#bt{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ba{color:var(--m);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bm{display:flex;flex-direction:column;align-items:center;gap:2px}
+.pg{display:flex;align-items:center;gap:10px;width:100%;color:var(--m);font-size:12px}
+#br{display:flex;justify-content:flex-end;align-items:center;gap:6px}
+body.pv #side{padding-top:56px}
+.set{max-width:560px;margin-top:20px}
+.set label{display:block;color:var(--m);margin:14px 0 6px;font-size:13px}
+.set input{width:100%;background:#101010;border:1px solid #222;border-radius:8px;color:#fff;padding:10px 12px;outline:0;user-select:text}
+.btn{background:#1b1b1b;border:1px solid #2c2c2c;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;margin:10px 8px 0 0}
+.btn.pr{background:var(--a);border-color:var(--a)}
+.hint{color:var(--m);font-size:12px;margin-top:6px;line-height:1.5}
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #333;padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:9;max-width:70vw}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="logo">LOONIFY</div>
+<audio id="a"></audio>
+<div id="app">
+  <div id="side">
+    <button class="ib on" data-v="home" data-ic="home"></button>
+    <button class="ib" data-v="player" data-ic="play"></button>
+    <button class="ib" data-v="search" data-ic="search"></button>
+    <button class="ib" data-v="library" data-ic="lib"></button>
+    <div class="sp"></div>
+    <button class="ib" data-v="settings" data-ic="gear"></button>
+  </div>
+
+  <div id="main">
+    <div id="v-home" class="view on">
+      <div class="search"><span data-ic="search"></span><input id="q" placeholder="Поиск треков, артистов..." autocomplete="off"></div>
+      <div id="resw" style="display:none"><h2>Результаты поиска</h2><div id="res"></div></div>
+      <div class="wave">
+        <button class="pp" id="wave" data-ic="play"></button>
+        <div><b>Моя волна</b><small>Случайные треки, пока ты ничего не сохранил. Поставишь лайки — подберу похожие</small>
+          <div class="chips"><span class="chip">SoundCloud</span><span class="chip">Яндекс Музыка</span><span class="chip">YouTube Music</span><span class="chip">Spotify</span></div></div>
+        <div class="moods"><h3>Настроение</h3><div class="chips" id="moods">
+          <span class="chip on" data-m="">Любое</span><span class="chip" data-m="sad">Погрустить</span><span class="chip" data-m="happy">Весело на душе</span>
+          <span class="chip" data-m="energy">Бодрое</span><span class="chip" data-m="calm">Спокойное</span><span class="chip" data-m="love">Романтика</span>
+          <span class="chip" data-m="dance">Для танцев</span><span class="chip" data-m="focus">Сосредоточиться</span><span class="chip" data-m="night">Ночное</span>
+          <span class="chip" data-m="nostalgia">Ностальгия</span></div></div>
+      </div>
+      <h2>Недавно слушали</h2><div id="hist" class="cards"></div>
+      <h2>Из лайков</h2><div id="likes" class="cards"></div>
+    </div>
+
+    <div id="v-player" class="view">
+      <img id="pc" alt="">
+      <div class="pinfo">
+        <div id="pt">Ничего не играет</div><div id="pa"></div>
+        <input type="range" id="pr2" min="0" max="1000" value="0">
+        <div class="tm"><span id="t2">0:00</span><span id="d2">0:00</span></div>
+        <div id="viz"></div>
+        <div class="ctrl">
+          <button class="ib" id="sh2" data-ic="shuffle" title="Перемешать"></button>
+          <button class="ib" id="pv2" data-ic="prev"></button>
+          <button class="pp" id="pp2" data-ic="play"></button>
+          <button class="ib" id="nx2" data-ic="next"></button>
+          <button class="ib" id="rp2" data-ic="repeat" title="Повтор"></button>
+          <button class="ib heart" id="ht2" data-ic="heart"></button>
+        </div>
+        <div class="vol" style="margin-top:18px"><span data-ic="vol"></span><input type="range" id="vol2" min="0" max="100" value="70"></div>
+      </div>
+    </div>
+
+    <div id="v-library" class="view">
+      <div class="tabs"><div class="tab on" data-t="likes">Лайки</div><div class="tab" data-t="history">История</div></div>
+      <div class="chips" id="flt" style="margin-bottom:14px"></div>
+      <div id="lib"></div>
+    </div>
+
+    <div id="v-settings" class="view">
+      <div class="set">
+        <h2>Яндекс Музыка</h2>
+        <label>Токен</label><input id="ym-token" type="password" placeholder="y0_...">
+        <button class="btn" onclick="pywebview.api.open_url('https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d')">Получить токен</button>
+        <button class="btn pr" id="ym-go">Подключить и импортировать лайки</button>
+        <div class="hint">Войди в аккаунт, после входа токен будет в адресной строке браузера после <code>access_token=</code>.</div>
+        <h2>Spotify</h2>
+        <label>Client ID</label><input id="sp-id">
+        <label>Client Secret</label><input id="sp-secret" type="password">
+        <button class="btn" onclick="pywebview.api.open_url('https://developer.spotify.com/dashboard')">Открыть dashboard</button>
+        <button class="btn pr" id="sp-go">Подключить и импортировать лайки</button>
+        <div class="hint">Создай приложение на developer.spotify.com/dashboard и добавь Redirect URI: <code>http://127.0.0.1:8888/callback</code>. Spotify даёт только список лайков и метаданные, звук берётся с YouTube Music по названию трека.</div>
+        <h2>SoundCloud и YouTube Music</h2>
+        <div class="hint">Подключение не нужно: поиск работает сразу.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bar">
+    <div id="bl"><div id="bc"></div><div style="min-width:0"><div id="bt">Ничего не играет</div><div id="ba"></div></div>
+      <button class="ib heart" id="ht1" data-ic="heart"></button></div>
+    <div id="bm">
+      <div class="ctrl">
+        <button class="ib" id="sh1" data-ic="shuffle" title="Перемешать"></button>
+        <button class="ib" id="pv1" data-ic="prev"></button>
+        <button class="pp" id="pp1" data-ic="play"></button>
+        <button class="ib" id="nx1" data-ic="next"></button>
+        <button class="ib" id="rp1" data-ic="repeat" title="Повтор"></button>
+      </div>
+      <div class="pg"><span id="t1">0:00</span><input type="range" id="pr1" min="0" max="1000" value="0"><span id="d1">0:00</span></div>
+    </div>
+    <div id="br"><div class="vol"><span data-ic="vol"></span><input type="range" id="vol1" min="0" max="100" value="70"></div></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const P={home:'M3 11l9-8 9 8v10H4V11z',play:'M8 5v14l11-7z',pause:'M7 5h4v14H7zM13 5h4v14h-4z',next:'M6 6l9 6-9 6zM16 6h2v12h-2z',prev:'M18 6l-9 6 9 6zM6 6h2v12H6z',
+search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5',lib:'M4 8h16v12H4zM6 4h12M8 1h8',gear:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-2-4-2 1-2-1-1-2h-4l-1 2-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1 1 2h4l1-2 2-1 2 1 2-4-2-1z',
+shuffle:'M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5',repeat:'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
+heart:'M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z',vol:'M3 9v6h4l5 4V5L7 9zM16 8a5 5 0 0 1 0 8'};
+const F=new Set(['play','pause','next','prev']);
+const ic=n=>`<svg viewBox="0 0 24 24"${F.has(n)?' class="f"':''}><path d="${P[n]}"/></svg>`;
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=s=>{s=Math.max(0,s|0);return (s/60|0)+':'+String(s%60).padStart(2,'0')};
+const SRC={ym:['Яндекс','#ffcc00'],sp:['Spotify','#1db954'],sc:['SoundCloud','#ff5500'],ytm:['YouTube','#ff3b3b']};
+const S={likes:[],history:[],q:[],i:-1,shuffle:false,repeat:0,filter:'all',tab:'likes',view:'home',auto:true,resume:0,mood:''};
+let loaded=false,ready=false,fillP=null;
+const L={};let tok=0;const A=$('#a');A.volume=.7;let hls=null,cur=null;
+function setVol(v){A.volume=v/100;$$('#vol1,#vol2').forEach(e=>{e.value=v;e.style.setProperty('--p',v+'%')})}
+
+const isLiked=t=>S.likes.some(l=>l.src==t.src&&l.id==t.id);
+const cov=t=>t.cover?`<img src="${esc(t.cover)}" loading="lazy" onerror="this.style.visibility='hidden'">`:'';
+const dot=t=>`<i class="dot" style="background:${SRC[t.src][1]}" title="${SRC[t.src][0]}"></i>`;
+const row=(t,i,n)=>`<div class="row${cur&&cur.src==t.src&&cur.id==t.id?' cur':''}" data-l="${n}" data-i="${i}"><div class="cv">${cov(t)}</div><div class="meta"><b>${esc(t.title)}</b><span>${dot(t)}${esc(t.artist)}</span></div><span class="dur">${t.dur?fmt(t.dur):''}</span><button class="ib heart${isLiked(t)?' on':''}">${ic('heart')}</button></div>`;
+const card=(t,i,n)=>`<div class="card" data-l="${n}" data-i="${i}"><div class="cv">${cov(t)}${dot(t)}</div><b>${esc(t.title)}</b><span>${esc(t.artist)}</span></div>`;
+function fill(el,list,n,f=row){L[n]=list;el.innerHTML=list.length?list.map((t,i)=>f(t,i,n)).join(''):'<div class="empty">Здесь пока пусто</div>'}
+
+function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),3500)}
+function renderHome(){fill($('#hist'),S.history.slice(0,12),'hist',card);fill($('#likes'),S.likes.slice(0,12),'likes',card)}
+function renderLib(){
+  const names={all:'Все',ym:'Яндекс',sp:'Spotify',sc:'SoundCloud',ytm:'YouTube'};
+  const base=S.tab=='likes'?S.likes:S.history;
+  $('#flt').innerHTML=Object.keys(names).map(k=>`<span class="chip${S.filter==k?' on':''}" data-f="${k}">${names[k]} (${k=='all'?base.length:base.filter(t=>t.src==k).length})</span>`).join('');
+  fill($('#lib'),base.filter(t=>S.filter=='all'||t.src==S.filter),'lib');
+}
+function renderAll(){renderHome();renderLib();if(!$('#resw').style.display||$('#resw').style.display!='none')fill($('#res'),L.res||[],'res');setHeart()}
+function setHeart(){const on=cur&&isLiked(cur);['#ht1','#ht2'].forEach(s=>$(s).classList.toggle('on',!!on))}
+
+function nav(v){
+  if(v=='search'){v='home';setTimeout(()=>$('#q').focus(),50)}
+  $$('.view').forEach(e=>e.classList.toggle('on',e.id=='v-'+v));
+  $$('#side .ib').forEach(b=>b.classList.toggle('on',b.dataset.v==v||(b.dataset.v=='search'&&0)));
+  document.body.classList.toggle('pv',v=='player');
+  S.view=v;saveSoon();
+  if(v=='library')renderLib();
+}
+function setNow(t){
+  cur=t;
+  $('#bt').textContent=$('#pt').textContent=t.title;$('#ba').textContent=$('#pa').textContent=t.artist;
+  $('#bc').innerHTML=cov(t);$('#pc').src=t.cover||'';document.title=t.title+' — Loonify';
+  setHeart();$$('.row').forEach(r=>{const x=L[r.dataset.l][r.dataset.i];r.classList.toggle('cur',x&&x.src==t.src&&x.id==t.id)});
+}
+const dur=()=>isFinite(A.duration)&&A.duration>0?A.duration:(cur&&cur.dur)||0;
+function setSrc(url){
+  if(hls){hls.destroy();hls=null}
+  if(url.includes('.m3u8')&&window.Hls&&Hls.isSupported()){hls=new Hls();hls.loadSource(url);hls.attachMedia(A)}else A.src=url;
+}
+async function load(resume=0){
+  const t=S.q[S.i];if(!t)return;const my=++tok;setNow(t);
+  $$('.pp').forEach(b=>b.style.opacity=.5);
+  const r=await pywebview.api.resolve(t);
+  $$('.pp').forEach(b=>b.style.opacity=1);
+  if(my!==tok)return;
+  if(r.error){loaded=false;toast('Не удалось получить трек: '+r.error);return}
+  if(resume>1)A.addEventListener('loadedmetadata',()=>{A.currentTime=resume},{once:true});
+  S.resume=0;loaded=true;
+  setSrc(r.url);A.play().catch(()=>toast('Ошибка воспроизведения'));
+  pywebview.api.add_history(t).then(h=>{S.history=h;renderHome()});
+  if(S.auto&&S.repeat!=1&&S.q.length-S.i<=3)topUp();
+  saveSoon();
+}
+function play(list,i,n){S.q=list;S.i=i;S.resume=0;S.auto=!['lib','likes'].includes(n);load()}
+// подгрузка новых треков: случайных или похожих на лайки
+function topUp(){
+  if(!fillP)fillP=(async()=>{
+    try{
+      const r=await pywebview.api.discover(20,S.mood);
+      const have=new Set(S.q.map(t=>t.src+':'+t.id));
+      const add=r.filter(t=>!have.has(t.src+':'+t.id));
+      S.q=S.q.concat(add);return add;
+    }catch(e){return []}
+    finally{fillP=null}
+  })();
+  return fillP;
+}
+function setMood(m){S.mood=m;$$('#moods .chip').forEach(c=>c.classList.toggle('on',c.dataset.m==m));saveSoon()}
+async function startWave(){
+  toast(S.mood?'Подбираю треки под настроение…':S.likes.length?'Подбираю треки по твоим лайкам…':'Подбираю случайные треки…');
+  const r=await pywebview.api.discover(25,S.mood);
+  if(!r.length)return toast('Не удалось подобрать треки. Проверь интернет');
+  play(r,0,'wave');
+}
+async function next(auto){
+  if(!S.q.length)return;
+  if(auto&&S.repeat==2){A.currentTime=0;A.play();return}
+  let i;
+  if(S.shuffle&&S.q.length>1){do{i=Math.random()*S.q.length|0}while(i==S.i)}
+  else{
+    i=S.i+1;
+    if(i>=S.q.length){
+      if(S.repeat==1)i=0;
+      else{
+        const add=S.auto?await topUp():[];
+        if(add.length)i=S.i+1;
+        else if(auto){A.pause();return}
+        else i=0;
+      }
+    }
+  }
+  S.i=i;load();
+}
+function prev(){if(!S.q.length)return;if(A.currentTime>3){A.currentTime=0;return}S.i=(S.i-1+S.q.length)%S.q.length;load()}
+function toggle(){
+  if(!S.q.length){startWave();return}
+  if(!loaded){load(S.resume);return}
+  A.paused?A.play():A.pause();
+}
+async function toggleLike(t){S.likes=await pywebview.api.toggle_like(t);renderAll()}
+function syncBtns(){
+  ['1','2'].forEach(n=>{$('#sh'+n).classList.toggle('act',S.shuffle);$('#rp'+n).classList.toggle('act',S.repeat>0);
+    $('#rp'+n).title=['Повтор: выкл','Повтор: все','Повтор: один трек'][S.repeat]});
+}
+
+A.onplay=A.onpause=()=>{document.body.classList.toggle('playing',!A.paused);$$('#pp1,#pp2').forEach(b=>b.innerHTML=ic(A.paused?'play':'pause'));
+  if(A.paused)$$('#viz i').forEach(b=>b.style.height='12%')};
+A.ontimeupdate=()=>{const d=dur(),p=d?A.currentTime/d*100:0;
+  ['#pr1','#pr2'].forEach(s=>{const e=$(s);e.value=p*10;e.style.setProperty('--p',p+'%')});
+  ['#t1','#t2'].forEach(s=>$(s).textContent=fmt(A.currentTime));['#d1','#d2'].forEach(s=>$(s).textContent=fmt(d))};
+A.onended=()=>next(true);
+A.onerror=()=>{if(A.src)toast('Поток недоступен, попробуй другой трек')};
+['1','2'].forEach(n=>{
+  $('#pr'+n).oninput=e=>{A.currentTime=e.target.value/1000*dur();e.target.style.setProperty('--p',e.target.value/10+'%')};
+  $('#vol'+n).oninput=e=>{setVol(+e.target.value);saveSoon()};
+  $('#pp'+n).onclick=toggle;$('#nx'+n).onclick=()=>next(false);$('#pv'+n).onclick=prev;
+  $('#sh'+n).onclick=()=>{S.shuffle=!S.shuffle;syncBtns();saveSoon()};
+  $('#rp'+n).onclick=()=>{S.repeat=(S.repeat+1)%3;syncBtns();saveSoon()};
+  $('#ht'+n).onclick=()=>cur&&toggleLike(cur);
+});
+$('#viz').innerHTML='<i></i>'.repeat(36);
+setInterval(()=>{if(!A.paused)$$('#viz i').forEach(b=>b.style.height=(15+Math.random()*85)+'%')},140);
+
+document.addEventListener('click',e=>{
+  const r=e.target.closest('.row,.card');
+  if(r){const t=L[r.dataset.l][r.dataset.i];if(e.target.closest('.heart'))toggleLike(t);else play(L[r.dataset.l],+r.dataset.i,r.dataset.l);return}
+  const c=e.target.closest('[data-f]');if(c){S.filter=c.dataset.f;renderLib();saveSoon();return}
+  const tb=e.target.closest('.tab');if(tb){S.tab=tb.dataset.t;$$('.tab').forEach(x=>x.classList.toggle('on',x==tb));renderLib();saveSoon();return}
+  const md=e.target.closest('[data-m]');if(md){setMood(md.dataset.m);startWave();return}
+  const nv=e.target.closest('#side [data-v]');if(nv)nav(nv.dataset.v);
+});
+document.addEventListener('keydown',e=>{if(e.code=='Space'&&e.target.tagName!='INPUT'){e.preventDefault();toggle()}});
+$('#q').addEventListener('keydown',async e=>{
+  if(e.key!='Enter')return;const q=e.target.value.trim();
+  if(!q){$('#resw').style.display='none';saveSoon();return}
+  $('#resw').style.display='block';$('#res').innerHTML='<div class="empty">Ищу…</div>';
+  const r=await pywebview.api.search(q);fill($('#res'),r,'res');saveSoon();
+});
+$('#wave').onclick=startWave;
+$('#ym-go').onclick=async()=>{
+  const r=await pywebview.api.connect_ym($('#ym-token').value.trim());toast(r.msg);if(!r.ok)return;
+  toast('Импортирую лайки из Яндекс Музыки…');S.likes=await pywebview.api.import_ym();renderAll();toast('Готово: лайки Яндекс Музыки импортированы');
+};
+$('#sp-go').onclick=async()=>{
+  toast('Открой браузер и разреши доступ Spotify…');
+  const r=await pywebview.api.connect_sp($('#sp-id').value.trim(),$('#sp-secret').value.trim());toast(r.msg);if(!r.ok)return;
+  S.likes=await pywebview.api.import_sp();renderAll();toast('Готово: лайки Spotify импортированы');
+};
+
+// ---- сохранение сессии: очередь, позиция, громкость, вкладки, поиск ----
+function snap(){
+  const W=200,st=Math.max(0,S.i-20);
+  return {q:S.q.slice(st,st+W),i:S.i<0?-1:S.i-st,pos:loaded?A.currentTime:S.resume,
+    vol:Math.round(A.volume*100),shuffle:S.shuffle,repeat:S.repeat,auto:S.auto,mood:S.mood,
+    view:S.view,tab:S.tab,filter:S.filter,
+    query:$('#resw').style.display=='block'?$('#q').value:'',res:(L.res||[]).slice(0,40)};
+}
+let st=null;
+function flush(){if(!ready)return;try{pywebview.api.save_session(snap())}catch(e){}}
+function saveSoon(){clearTimeout(st);st=setTimeout(flush,1200)}
+setInterval(()=>{if(!A.paused)flush()},3000);
+['pagehide','beforeunload','visibilitychange'].forEach(ev=>window.addEventListener(ev,flush));
+A.addEventListener('play',saveSoon);A.addEventListener('pause',saveSoon);
+
+window.addEventListener('pywebviewready',async()=>{
+  $$('[data-ic]').forEach(e=>e.innerHTML=ic(e.dataset.ic));
+  const s=await pywebview.api.get_state();S.likes=s.likes;S.history=s.history;
+  if(s.ym)$('#ym-token').placeholder='Подключено ✓';if(s.sp)$('#sp-id').placeholder='Подключено ✓';
+  const se=s.session||{};
+  if(se.vol!=null)setVol(se.vol);
+  S.shuffle=!!se.shuffle;S.repeat=se.repeat|0;S.auto=se.auto!==false;setMood(se.mood||'');
+  if(se.tab){S.tab=se.tab;$$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t==S.tab))}
+  if(se.filter)S.filter=se.filter;
+  if(se.q&&se.q.length&&se.i>=0&&se.i<se.q.length){
+    S.q=se.q;S.i=se.i;S.resume=se.pos||0;setNow(S.q[S.i]);
+    const d=S.q[S.i].dur||0,p=d?S.resume/d*100:0;
+    ['#t1','#t2'].forEach(x=>$(x).textContent=fmt(S.resume));['#d1','#d2'].forEach(x=>$(x).textContent=fmt(d));
+    ['#pr1','#pr2'].forEach(x=>{$(x).value=p*10;$(x).style.setProperty('--p',p+'%')});
+  }
+  if(se.query){$('#q').value=se.query;$('#resw').style.display='block';L.res=se.res||[]}
+  syncBtns();renderAll();
+  nav(se.view&&se.view!='search'?se.view:'home');
+  ready=true;
+});
+</script>
+</body>
+</html>
